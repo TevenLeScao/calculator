@@ -29,7 +29,8 @@ if __name__ == "__main__":
             train_set = nlp.load_dataset('pg19', split='train[:1%]')
         else:
             train_set = nlp.load_dataset('pg19', split='train')
-        train_set = train_set.map(convert_to_features, batched=True, batch_size=10, cache_file_name=cache_file_name)
+        train_set = train_set.map(convert_to_features, batched=True, batch_size=10, cache_file_name=cache_file_name,
+                                  remove_columns=["text"])
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
     # Trainer
