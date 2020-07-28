@@ -16,7 +16,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--sanity", action="store_true")
     args = parser.parse_args()
-    print(args.sanity)
+    print(f"sanity is {args.sanity}")
     
     cache_file_name = "data/tokenized_dataset" + ("_sanity" if args.sanity else "") + ".pyarrow"
     # Model
