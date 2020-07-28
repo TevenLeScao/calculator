@@ -3,7 +3,7 @@ from transformers import DataCollatorForLanguageModeling, LineByLineTextDataset,
     GPT2Config, GPT2Tokenizer, GPT2LMHeadModel
 
 SANITY = True
-cache_file_name = "data/tokenized_dataset" + "_sanity" if SANITY else "" + ".pyarrow"
+cache_file_name = "data/tokenized_dataset" + ("_sanity" if SANITY else "") + ".pyarrow"
 
 
 def convert_to_features(example_batch):
