@@ -1,9 +1,8 @@
 import nlp
 from transformers import DataCollatorForLanguageModeling, LineByLineTextDataset, TrainingArguments, Trainer, \
     GPT2Config, GPT2Tokenizer, GPT2LMHeadModel
+import argparse
 
-SANITY = True
-cache_file_name = "data/tokenized_dataset" + ("_sanity" if SANITY else "") + ".pyarrow"
 
 
 def convert_to_features(example_batch):
@@ -14,6 +13,12 @@ def convert_to_features(example_batch):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--sanity", action="store_true")
+    args = parser.parse_args()
+    print(args.sanity)
+    
+    cache_file_name = "data/tokenized_dataset" + ("_sanity" if args.sanity else "") + ".pyarrow"
     # Model
     config = GPT2Config(
         vocab_size=40001, n_layer=6,
@@ -25,7 +30,7 @@ if __name__ == "__main__":
         train_set = nlp.Dataset.from_file(cache_file_name)
     except FileNotFoundError:
         # Data
-        if SANITY:
+        if args.sanity:
             train_set = nlp.load_dataset('pg19', split='train[:1%]')
         else:
             train_set = nlp.load_dataset('pg19', split='train')
