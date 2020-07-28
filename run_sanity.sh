@@ -1,2 +1,2 @@
 export WANDB_PROJECT=gpt-estimates
-python train.py
+python train.py --sanity
