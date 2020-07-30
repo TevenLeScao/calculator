@@ -3,6 +3,7 @@ import argparse
 import itertools
 
 import nlp
+from tokenizers import ByteLevelBPETokenizer
 from transformers import DataCollatorForLanguageModeling, LineByLineTextDataset, TrainingArguments, Trainer, \
     GPT2Config, GPT2Tokenizer, GPT2LMHeadModel
 
@@ -36,6 +37,7 @@ def convert_to_features(example_batch, ids, context_size=2048, cut_trail_off=Tru
                            for i in range(0, len(masks), context_size)]
     encodings["input_ids"] = input_ids
     encodings["attention_mask"] = attention_masks
+
     return encodings
 
 
@@ -57,22 +59,23 @@ if __name__ == "__main__":
     cache_file_name = "data/tokenized_dataset" + ("_sanity" if args.sanity else "") + ".pyarrow"
     # Model
     config = GPT2Config(
-        vocab_size=40000, n_layer=6,
+        vocab_size=40001, n_layer=2, n_ctx=2048
     )
-    tokenizer = GPT2Tokenizer.from_pretrained("tokenizer_pg19")
+    tokenizer = GPT2Tokenizer.from_pretrained("tokenizer_pg19", pad_token="<pad>")
     model = GPT2LMHeadModel(config=config)
 
     if os.path.isfile(cache_file_name) and not args.remap:
-        train_set = nlp.Dataset.from_file(cache_file_name)
+        chunked_dataset = nlp.Dataset.from_file(cache_file_name)
     else:
         # Data
         if args.sanity:
             train_set = nlp.load_dataset('pg19', split='train[:1%]')
         else:
             train_set = nlp.load_dataset('pg19', split='train')
-        train_set = train_set.map(convert_to_features, with_indices=True, batched=True, batch_size=10,
-                                  cache_file_name=cache_file_name, remove_columns=train_set.column_names)
-    train_set.set_format("torch")
+        chunked_dataset = train_set.map(convert_to_features, with_indices=True, batched=True, batch_size=10,
+                                        cache_file_name=cache_file_name, remove_columns=train_set.column_names,
+                                        load_from_cache_file=False)
+    chunked_dataset.set_format("torch")
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
     # Trainer
@@ -80,12 +83,12 @@ if __name__ == "__main__":
         output_dir="./gpt2_pg19",
         overwrite_output_dir=True,
         num_train_epochs=1,
-        per_gpu_train_batch_size=16,
+        per_gpu_train_batch_size=2,
         save_steps=10,
         save_total_limit=2,
     )
     trainer = Trainer(
-        model=model, args=training_args, data_collator=data_collator, train_dataset=train_set,
+        model=model, args=training_args, data_collator=data_collator, train_dataset=chunked_dataset,
         prediction_loss_only=True,
     )
     trainer.train()
