@@ -9,7 +9,7 @@ from transformers import DataCollatorForLanguageModeling, LineByLineTextDataset,
 
 
 # 2048 was GPT3's context size
-def convert_to_features(example_batch, ids, context_size=2048, cut_trail_off=True):
+def convert_to_features(example_batch, ids, context_size=2048):
     # Tokenize contexts and questions (as pairs of inputs)
     batch_text = example_batch['text']
     encodings = tokenizer.batch_encode_plus(batch_text, pad_to_max_length=False)
@@ -21,20 +21,12 @@ def convert_to_features(example_batch, ids, context_size=2048, cut_trail_off=Tru
     encodings["internal_ids"] = list(itertools.chain.from_iterable(
         [range(len(text_ids) // context_size) for text_ids in input_ids])
     )
-    if cut_trail_off:
-        input_ids = [text_ids[i:i + context_size]
-                     for text_ids in input_ids
-                     for i in range(0, len(text_ids), context_size)[:-1]]
-        attention_masks = [masks[i:i + context_size]
-                           for masks in attention_masks
-                           for i in range(0, len(masks), context_size)[:-1]]
-    else:
-        input_ids = [text_ids[i:i + context_size]
-                     for text_ids in input_ids
-                     for i in range(0, len(text_ids), context_size)]
-        attention_masks = [masks[i:i + context_size]
-                           for masks in attention_masks
-                           for i in range(0, len(masks), context_size)]
+    input_ids = [text_ids[i * context_size:(i + 1) * context_size]
+                 for text_ids in input_ids
+                 for i in range(0, len(text_ids) // context_size)]
+    attention_masks = [masks[i * context_size:(i + 1) * context_size]
+                       for masks in attention_masks
+                       for i in range(0, len(masks) // context_size)]
     encodings["input_ids"] = input_ids
     encodings["attention_mask"] = attention_masks
 
@@ -59,7 +51,7 @@ if __name__ == "__main__":
     cache_file_name = "data/tokenized_dataset" + ("_sanity" if args.sanity else "") + ".pyarrow"
     # Model
     config = GPT2Config(
-        vocab_size=40001, n_layer=2, n_ctx=2048
+        vocab_size=40001, n_layer=2, n_ctx=2048, n_embd=64, n_head=4,
     )
     tokenizer = GPT2Tokenizer.from_pretrained("tokenizer_pg19", pad_token="<pad>")
     model = GPT2LMHeadModel(config=config)
