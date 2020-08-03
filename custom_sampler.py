@@ -120,7 +120,7 @@ class LongRangeTrainer(Trainer):
             train_sampler = None
         else:
             train_sampler = (
-                ConsecutiveSampler(self.train_dataset, text_starts, self.args.per_device_train_batch_size, shuffle=False)
+                ConsecutiveSampler(self.train_dataset, text_starts, self.args.per_device_train_batch_size, shuffle=True)
                 if self.args.local_rank == -1
                 else DistributedConsecutiveSampler(self.train_dataset, text_starts,
                                                    self.args.per_device_train_batch_size)

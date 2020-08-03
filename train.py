@@ -72,11 +72,11 @@ if __name__ == "__main__":
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
     # Trainer
     training_args = TrainingArguments(
-        output_dir="./gpt2_pg19",
+        output_dir="gpt2_pg19",
         overwrite_output_dir=True,
         num_train_epochs=1,
         per_device_train_batch_size=2,
-        save_steps=10,
+        save_steps=4,
         save_total_limit=2,
         no_cuda=True
     )
@@ -85,4 +85,4 @@ if __name__ == "__main__":
         prediction_loss_only=True,
     )
     trainer.train()
-    trainer.save_model("./gpt2_pg19")
+    trainer.save_model("gpt2_pg19")
