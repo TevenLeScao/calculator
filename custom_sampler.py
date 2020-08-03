@@ -121,7 +121,7 @@ class LongRangeTrainer(Trainer):
             train_sampler = None
         else:
             train_sampler = (
-                ConsecutiveSampler(self.train_dataset, text_starts, self.args.per_device_train_batch_size, shuffle=True)
+                ConsecutiveSampler(self.train_dataset, text_starts, self.args.train_batch_size, shuffle=True)
                 if self.args.local_rank == -1
                 else DistributedConsecutiveSampler(self.train_dataset, text_starts,
                                                    self.args.per_device_train_batch_size)
@@ -145,7 +145,7 @@ class LongRangeTrainer(Trainer):
             eval_sampler = None
         else:
             eval_sampler = (
-                ConsecutiveSampler(eval_dataset, [0], self.args.per_device_train_batch_size)
+                ConsecutiveSampler(eval_dataset, [0], self.args.train_batch_size)
                 if self.args.local_rank == -1
                 else DistributedConsecutiveSampler(eval_dataset, [0],
                                                    self.args.per_device_train_batch_size)
@@ -165,7 +165,7 @@ class LongRangeTrainer(Trainer):
             test_sampler = None
         else:
             test_sampler = (
-                ConsecutiveSampler(test_dataset, [0], self.args.per_device_train_batch_size)
+                ConsecutiveSampler(test_dataset, [0], self.args.train_batch_size)
                 if self.args.local_rank == -1
                 else DistributedConsecutiveSampler(test_dataset, [0],
                                                    self.args.per_device_train_batch_size)
