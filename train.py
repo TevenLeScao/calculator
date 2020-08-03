@@ -6,7 +6,7 @@ import nlp
 from transformers import DataCollatorForLanguageModeling, TrainingArguments, Trainer, \
     GPT2Config, GPT2Tokenizer, GPT2LMHeadModel
 
-from custom_sampler import LongRangeTrainer
+from custom_sampler import LongRangeTrainer, VerboseDataCollator
 
 
 def start_column(text_ids, context_size):
@@ -69,7 +69,7 @@ if __name__ == "__main__":
                                         load_from_cache_file=False)
     chunked_dataset.set_format("torch")
 
-    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+    data_collator = VerboseDataCollator(tokenizer=tokenizer, mlm=False)
     # Trainer
     training_args = TrainingArguments(
         output_dir="gpt2_pg19",

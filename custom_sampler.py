@@ -1,11 +1,12 @@
 import math
 from itertools import chain
-from typing import Optional
+from typing import Optional, List
 
 import torch
 import torch.distributed as dist
+from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset, DataLoader
-from transformers import Trainer
+from transformers import Trainer, DataCollatorForLanguageModeling
 
 
 class ConsecutiveSampler(torch.utils.data.Sampler):
@@ -34,7 +35,8 @@ class ConsecutiveSampler(torch.utils.data.Sampler):
         # consecutive order
         sequence_length = len(sample_order) // self.batch_size
         clamp_len = sequence_length * self.batch_size
-        batched_order = list(chain.from_iterable([sample_order[i:clamp_len:sequence_length] for i in range(sequence_length)]))
+        batched_order = list(
+            chain.from_iterable([sample_order[i:clamp_len:sequence_length] for i in range(sequence_length)]))
         return iter(batched_order)
 
     def __len__(self):
@@ -177,3 +179,22 @@ class LongRangeTrainer(Trainer):
             collate_fn=self.data_collator,
             drop_last=self.args.dataloader_drop_last,
         )
+
+
+class VerboseDataCollator(DataCollatorForLanguageModeling):
+
+    def _tensorize_batch(self, examples: List[torch.Tensor]) -> torch.Tensor:
+        length_of_first = examples[0].size(0)
+        are_tensors_same_length = all(x.size(0) == length_of_first for x in examples)
+        for example in self.tokenizer.batch_decode(examples):
+            print(example)
+            print("-" * 89)
+        if are_tensors_same_length:
+            return torch.stack(examples, dim=0)
+        else:
+            if self.tokenizer._pad_token is None:
+                raise ValueError(
+                    "You are attempting to pad samples but the tokenizer you are using"
+                    f" ({self.tokenizer.__class__.__name__}) does not have one."
+                )
+            return pad_sequence(examples, batch_first=True, padding_value=self.tokenizer.pad_token_id)
