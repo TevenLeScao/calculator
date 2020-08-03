@@ -3,9 +3,19 @@ import argparse
 import itertools
 
 import nlp
-from tokenizers import ByteLevelBPETokenizer
-from transformers import DataCollatorForLanguageModeling, LineByLineTextDataset, TrainingArguments, Trainer, \
+from transformers import DataCollatorForLanguageModeling, TrainingArguments, Trainer, \
     GPT2Config, GPT2Tokenizer, GPT2LMHeadModel
+
+from custom_sampler import LongRangeTrainer
+
+
+def start_column(text_ids, context_size):
+    start_list = [False] * (len(text_ids) // context_size)
+    try:
+        start_list[0] = True
+    except IndexError:
+        pass
+    return start_list
 
 
 # 2048 was GPT3's context size
@@ -15,11 +25,8 @@ def convert_to_features(example_batch, ids, context_size=2048):
     encodings = tokenizer.batch_encode_plus(batch_text, pad_to_max_length=False)
     input_ids = encodings["input_ids"]
     attention_masks = encodings["attention_mask"]
-    encodings["external_ids"] = list(itertools.chain.from_iterable(
-        [[doc_idx] * (len(text_ids) // context_size) for doc_idx, text_ids in zip(ids, input_ids)])
-    )
-    encodings["internal_ids"] = list(itertools.chain.from_iterable(
-        [range(len(text_ids) // context_size) for text_ids in input_ids])
+    encodings["start_of_doc"] = list(itertools.chain.from_iterable(
+        [start_column(text_ids, context_size) for text_ids in input_ids])
     )
     input_ids = [text_ids[i * context_size:(i + 1) * context_size]
                  for text_ids in input_ids
@@ -33,13 +40,6 @@ def convert_to_features(example_batch, ids, context_size=2048):
     return encodings
 
 
-def chunk_examples(examples):
-    chunks = []
-    for sentence in examples['sentence1']:
-        chunks += [sentence[i:i + 50] for i in range(0, len(sentence), 50)]
-    return {'chunks': chunks}
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--remap", action="store_true")
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     cache_file_name = "data/tokenized_dataset" + ("_sanity" if args.sanity else "") + ".pyarrow"
     # Model
     config = GPT2Config(
-        vocab_size=40001, n_layer=2, n_ctx=2048, n_embd=64, n_head=4,
+        vocab_size=40001, n_layer=2, n_positions=2048, n_ctx=2048, n_embd=64, n_head=4,
     )
     tokenizer = GPT2Tokenizer.from_pretrained("tokenizer_pg19", pad_token="<pad>")
     model = GPT2LMHeadModel(config=config)
@@ -68,18 +68,19 @@ if __name__ == "__main__":
                                         cache_file_name=cache_file_name, remove_columns=train_set.column_names,
                                         load_from_cache_file=False)
     chunked_dataset.set_format("torch")
-    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
+    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
     # Trainer
     training_args = TrainingArguments(
         output_dir="./gpt2_pg19",
         overwrite_output_dir=True,
         num_train_epochs=1,
-        per_gpu_train_batch_size=2,
+        per_device_train_batch_size=2,
         save_steps=10,
         save_total_limit=2,
+        no_cuda=True
     )
-    trainer = Trainer(
+    trainer = LongRangeTrainer(
         model=model, args=training_args, data_collator=data_collator, train_dataset=chunked_dataset,
         prediction_loss_only=True,
     )
