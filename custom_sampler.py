@@ -35,7 +35,6 @@ class ConsecutiveSampler(torch.utils.data.Sampler):
         sequence_length = len(sample_order) // self.batch_size
         clamp_len = sequence_length * self.batch_size
         batched_order = list(chain.from_iterable([sample_order[i:clamp_len:sequence_length] for i in range(sequence_length)]))
-        print(batched_order)
         return iter(batched_order)
 
     def __len__(self):

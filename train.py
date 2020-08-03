@@ -78,7 +78,6 @@ if __name__ == "__main__":
         per_device_train_batch_size=2,
         save_steps=4,
         save_total_limit=2,
-        no_cuda=True
     )
     trainer = LongRangeTrainer(
         model=model, args=training_args, data_collator=data_collator, train_dataset=chunked_dataset,
