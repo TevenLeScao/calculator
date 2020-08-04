@@ -77,10 +77,8 @@ if __name__ == "__main__":
     chunked_train_set = chunk_dataset("pg19", "train", args.remap, args.sanity, cache_train_name)
     chunked_eval_set = chunk_dataset("pg19", "validation", args.remap, args.sanity, cache_eval_name)
 
-    if args.sanity:
-        data_collator = VerboseDataCollator(tokenizer=tokenizer, mlm=False)
-    else:
-        data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+
     # Trainer
     training_args = TrainingArguments(
         output_dir="gpt2_pg19",
@@ -92,6 +90,7 @@ if __name__ == "__main__":
         save_total_limit=2,
         fp16=True,
         fp16_opt_level="O2",
+        evaluate_during_training=True
     )
     trainer = LongRangeTrainer(
         model=model, args=training_args, data_collator=data_collator, train_dataset=chunked_train_set,
