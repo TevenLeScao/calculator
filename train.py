@@ -40,6 +40,23 @@ def convert_to_features(example_batch, ids, context_size=2048):
     return encodings
 
 
+def chunk_dataset(dataset, split, remap=False, sanity=False, cache=""):
+    if os.path.isfile(cache) and not remap:
+        chunked_dataset = nlp.Dataset.from_file(cache)
+    else:
+        # Data
+        if sanity:
+            dataset = nlp.load_dataset(dataset, split=f'{split}[:1%]')
+        else:
+            dataset = nlp.load_dataset(dataset, split=split)
+        chunked_dataset = dataset.map(convert_to_features, with_indices=True, batched=True, batch_size=10,
+                                      cache_file_name=cache, remove_columns=dataset.column_names,
+                                      load_from_cache_file=False)
+
+    chunked_dataset.set_format("torch")
+    return chunked_dataset
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--remap", action="store_true")
@@ -48,7 +65,8 @@ if __name__ == "__main__":
     for k, v in vars(args).items():
         print(f"{k}: {v}")
 
-    cache_file_name = "data/tokenized_dataset" + ("_sanity" if args.sanity else "") + ".pyarrow"
+    cache_train_name = "data/tokenized_dataset" + ("_sanity" if args.sanity else "") + ".pyarrow"
+    cache_eval_name = "data/tokenized_evalset" + ("_sanity" if args.sanity else "") + ".pyarrow"
     # Model
     config = GPT2Config(
         vocab_size=40001, n_layer=2, n_positions=2048, n_ctx=2048, n_embd=64, n_head=4,
@@ -56,18 +74,8 @@ if __name__ == "__main__":
     tokenizer = GPT2Tokenizer.from_pretrained("tokenizer_pg19", pad_token="<pad>")
     model = GPT2LMHeadModel(config=config)
 
-    if os.path.isfile(cache_file_name) and not args.remap:
-        chunked_dataset = nlp.Dataset.from_file(cache_file_name)
-    else:
-        # Data
-        if args.sanity:
-            train_set = nlp.load_dataset('pg19', split='train[:1%]')
-        else:
-            train_set = nlp.load_dataset('pg19', split='train')
-        chunked_dataset = train_set.map(convert_to_features, with_indices=True, batched=True, batch_size=10,
-                                        cache_file_name=cache_file_name, remove_columns=train_set.column_names,
-                                        load_from_cache_file=False)
-    chunked_dataset.set_format("torch")
+    chunked_train_set = chunk_dataset("pg19", "train", args.remap, args.sanity, cache_train_name)
+    chunked_eval_set = chunk_dataset("pg19", "validation", args.remap, args.sanity, cache_eval_name)
 
     if args.sanity:
         data_collator = VerboseDataCollator(tokenizer=tokenizer, mlm=False)
@@ -79,12 +87,15 @@ if __name__ == "__main__":
         overwrite_output_dir=True,
         num_train_epochs=1,
         per_device_train_batch_size=2,
-        save_steps=4,
+        eval_steps=500,
+        save_steps=500,
         save_total_limit=2,
+        fp16=True,
+        fp16_opt_level="O2",
     )
     trainer = LongRangeTrainer(
-        model=model, args=training_args, data_collator=data_collator, train_dataset=chunked_dataset,
-        prediction_loss_only=True,
+        model=model, args=training_args, data_collator=data_collator, train_dataset=chunked_train_set,
+        eval_dataset=chunked_eval_set, prediction_loss_only=True,
     )
     trainer.train()
     trainer.save_model("gpt2_pg19")
