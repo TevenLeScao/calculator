@@ -61,6 +61,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--remap", action="store_true")
     parser.add_argument("--sanity", action="store_true")
+    parser.add_argument("--depth", type=int, default=2)
+    parser.add_argument("--width", type=int, default=64)
     args = parser.parse_args()
     for k, v in vars(args).items():
         print(f"{k}: {v}")
@@ -68,8 +70,10 @@ if __name__ == "__main__":
     cache_train_name = "data/tokenized_dataset" + ("_sanity" if args.sanity else "") + ".pyarrow"
     cache_eval_name = "data/tokenized_evalset" + ("_sanity" if args.sanity else "") + ".pyarrow"
     # Model
+    depth = args.depth
+    width = args.width
     config = GPT2Config(
-        vocab_size=40001, n_layer=2, n_positions=2048, n_ctx=2048, n_embd=64, n_head=4,
+        vocab_size=40001, n_layer=args.depth, n_positions=2048, n_ctx=2048, n_embd=args.width, n_head=args.width // 32,
     )
     tokenizer = GPT2Tokenizer.from_pretrained("tokenizer_pg19", pad_token="<pad>")
     model = GPT2LMHeadModel(config=config)
