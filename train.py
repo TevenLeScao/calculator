@@ -95,11 +95,12 @@ if __name__ == "__main__":
         save_total_limit=2,
         fp16=True,
         fp16_opt_level="O2",
-        evaluate_during_training=True
+        evaluate_during_training=True,
+        run_name=f"{depth} * {width} * {4 * width}"
     )
     trainer = LongRangeTrainer(
         model=model, args=training_args, data_collator=data_collator, train_dataset=chunked_train_set,
-        eval_dataset=chunked_eval_set, prediction_loss_only=True,
+        eval_dataset=chunked_eval_set, prediction_loss_only=True
     )
     trainer.train()
     trainer.save_model("gpt2_pg19")
