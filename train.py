@@ -1,4 +1,5 @@
 import itertools
+import logging
 import os
 
 import nlp
@@ -6,6 +7,8 @@ from transformers import DataCollatorForLanguageModeling, TrainingArguments, GPT
 
 from argparsing import parser
 from custom_sampler import LongRangeTrainer
+
+logger = logging.getLogger(__name__)
 
 
 def start_column(text_ids, context_size):
@@ -59,7 +62,7 @@ def chunk_dataset(dataset, split, remap=False, sanity=False, cache=""):
 if __name__ == "__main__":
     args = parser.parse_args()
     for k, v in vars(args).items():
-        print(f"{k}: {v}")
+        logger.info(f"{k}: {v}")
 
     cache_train_name = "data/tokenized_dataset" + ("_sanity" if args.sanity else "") + ".pyarrow"
     cache_eval_name = "data/tokenized_evalset" + ("_sanity" if args.sanity else "") + ".pyarrow"
