@@ -92,7 +92,8 @@ if __name__ == "__main__":
         fp16=True,
         fp16_opt_level="O2",
         evaluate_during_training=True,
-        run_name=run_name
+        run_name=run_name,
+        warmup_steps=args.warmup
     )
     trainer = LongRangeTrainer(
         model=model, args=training_args, data_collator=data_collator, train_dataset=chunked_train_set,
