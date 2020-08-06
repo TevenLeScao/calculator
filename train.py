@@ -78,6 +78,7 @@ if __name__ == "__main__":
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
     # Trainer
+    run_name = f"{depth} * {width} * {4 * width} lr {args.lr}" + "" if args.suffix is None else f" {args.suffix}"
     training_args = TrainingArguments(
         output_dir="gpt2_pg19",
         overwrite_output_dir=True,
@@ -85,13 +86,13 @@ if __name__ == "__main__":
         eval_steps=100,
         save_steps=100,
         per_device_train_batch_size=2,
-        gradient_accumulation_steps=32,
+        gradient_accumulation_steps=args.accum,
         learning_rate=args.lr,
         save_total_limit=2,
         fp16=True,
         fp16_opt_level="O2",
         evaluate_during_training=True,
-        run_name=f"{depth} * {width} * {4 * width}"
+        run_name=run_name
     )
     trainer = LongRangeTrainer(
         model=model, args=training_args, data_collator=data_collator, train_dataset=chunked_train_set,
