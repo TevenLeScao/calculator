@@ -78,7 +78,7 @@ if __name__ == "__main__":
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
     # Trainer
-    run_name = f"{depth} * {width} * {4 * width} lr {args.lr}" + "" if args.suffix is None else f" {args.suffix}"
+    run_name = f"{depth} * {width} * {4 * width} lr {args.lr}" + ("" if args.suffix is None else f" {args.suffix}")
     training_args = TrainingArguments(
         output_dir="gpt2_pg19",
         overwrite_output_dir=True,
