@@ -1,12 +1,11 @@
-import os
-import argparse
 import itertools
+import os
 
 import nlp
-from transformers import DataCollatorForLanguageModeling, TrainingArguments, Trainer, \
-    GPT2Config, GPT2Tokenizer, GPT2LMHeadModel
+from transformers import DataCollatorForLanguageModeling, TrainingArguments, GPT2Config, GPT2Tokenizer, GPT2LMHeadModel
 
-from custom_sampler import LongRangeTrainer, VerboseDataCollator
+from argparsing import parser
+from custom_sampler import LongRangeTrainer
 
 
 def start_column(text_ids, context_size):
@@ -58,11 +57,6 @@ def chunk_dataset(dataset, split, remap=False, sanity=False, cache=""):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--remap", action="store_true")
-    parser.add_argument("--sanity", action="store_true")
-    parser.add_argument("--depth", type=int, default=2)
-    parser.add_argument("--width", type=int, default=64)
     args = parser.parse_args()
     for k, v in vars(args).items():
         print(f"{k}: {v}")
@@ -88,10 +82,10 @@ if __name__ == "__main__":
         output_dir="gpt2_pg19",
         overwrite_output_dir=True,
         num_train_epochs=1,
-        per_device_train_batch_size=2,
-        gradient_accumulation_steps=32,
         eval_steps=100,
         save_steps=100,
+        per_device_train_batch_size=2,
+        gradient_accumulation_steps=32,
         save_total_limit=2,
         fp16=True,
         fp16_opt_level="O2",
