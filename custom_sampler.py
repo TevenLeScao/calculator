@@ -115,7 +115,7 @@ class LongRangeTrainer(Trainer):
         if self.train_dataset is None:
             raise ValueError("Trainer: training requires a train_dataset.")
 
-        text_starts = self.train_dataset["start_of_doc"].nonzero(as_tuple=False).squeeze(1).tolist()
+        text_starts = [idx for idx, value in enumerate(self.train_dataset["start_of_doc"]) if value]
 
         if isinstance(self.train_dataset, torch.utils.data.IterableDataset):
             train_sampler = None

@@ -83,6 +83,7 @@ if __name__ == "__main__":
 
     # Trainer
     run_name = f"{depth} * {width} * {4 * width} lr {args.lr}" + ("" if args.suffix is None else f" {args.suffix}")
+    local_rank = args.local_rank
     training_args = TrainingArguments(
         output_dir="gpt2_pg19",
         overwrite_output_dir=True,
@@ -98,7 +99,8 @@ if __name__ == "__main__":
         fp16_opt_level="O2",
         evaluate_during_training=True,
         run_name=run_name,
-        warmup_steps=args.warmup
+        warmup_steps=args.warmup,
+        local_rank=local_rank
     )
     trainer = LongRangeTrainer(
         model=model, args=training_args, data_collator=data_collator, train_dataset=chunked_train_set,
