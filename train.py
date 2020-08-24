@@ -69,8 +69,9 @@ if __name__ == "__main__":
     # Model
     depth = args.depth
     width = args.width
+    inner = args.inner if args.inner is not None else width
     config = GPT2Config(
-        vocab_size=40001, n_layer=args.depth, n_positions=2048, n_ctx=2048, n_embd=args.width, n_head=args.width // 32,
+        vocab_size=40001, n_layer=depth, n_positions=2048, n_ctx=2048, n_embd=width, n_inner=inner, n_head=width // 32,
     )
     tokenizer = GPT2Tokenizer.from_pretrained("tokenizer_pg19", pad_token="<pad>")
     model = GPT2LMHeadModel(config=config)
