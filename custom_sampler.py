@@ -60,7 +60,7 @@ class DistributedConsecutiveSampler(torch.utils.data.Sampler):
         self.num_replicas = num_replicas
         self.rank = rank
         self.epoch = 0
-        self.num_samples = int(math.floor(len(self.data_source) / self.num_replicas))
+        self.num_samples = int(math.ceil(len(self.data_source) * 1.0 / self.num_replicas))
         self.total_size = self.num_samples * self.num_replicas
         self.shuffle = shuffle
         self.data_source = data_source
@@ -80,7 +80,8 @@ class DistributedConsecutiveSampler(torch.utils.data.Sampler):
 
         # add extra samples to make it evenly divisible
         sample_order += sample_order[:(self.total_size - len(sample_order))]
-        assert len(sample_order) == self.total_size
+        assert len(sample_order) == self.total_size, \
+            f"Total indices length {len(sample_order)} and dataset size {self.total_size} mismatched"
 
         # subsample
         indices = sample_order[self.rank * self.num_samples:(self.rank + 1) * self.num_samples]
