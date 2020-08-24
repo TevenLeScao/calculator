@@ -60,7 +60,7 @@ class DistributedConsecutiveSampler(torch.utils.data.Sampler):
         self.num_replicas = num_replicas
         self.rank = rank
         self.epoch = 0
-        self.num_samples = int(math.ceil(len(self.data_source) * 1.0 / self.num_replicas))
+        self.num_samples = int(math.floor(len(self.data_source) / self.num_replicas))
         self.total_size = self.num_samples * self.num_replicas
         self.shuffle = shuffle
         self.data_source = data_source
