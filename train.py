@@ -95,6 +95,7 @@ if __name__ == "__main__":
         world_size = torch.cuda.device_count()
     device_batch_size = total_batch_size / world_size / accum
     assert int(device_batch_size) == device_batch_size
+    device_batch_size = int(device_batch_size)
     run_name = f"{depth} * {width} * {4 * width} lr {lr} bs {total_batch_size}" \
                + ("" if args.suffix is None else f" {args.suffix}")
     training_args = TrainingArguments(
