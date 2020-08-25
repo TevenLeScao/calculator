@@ -2,6 +2,8 @@ import itertools
 import logging
 import os
 
+import torch
+
 import nlp
 from transformers import DataCollatorForLanguageModeling, TrainingArguments, GPT2Config, GPT2Tokenizer, GPT2LMHeadModel
 
@@ -82,18 +84,29 @@ if __name__ == "__main__":
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
     # Trainer
-    run_name = f"{depth} * {width} * {4 * width} lr {args.lr}" + ("" if args.suffix is None else f" {args.suffix}")
+    lr = args.lr
+    log_freq = args.log_freq
     local_rank = args.local_rank
+    total_batch_size = args.batch_size
+    accum = args.accum
+    if local_rank != -1:
+        world_size = torch.distributed.get_world_size()
+    else:
+        world_size = torch.cuda.device_count()
+    device_batch_size = total_batch_size / world_size / accum
+    assert int(device_batch_size) == device_batch_size
+    run_name = f"{depth} * {width} * {4 * width} lr {lr} bs {total_batch_size}" \
+               + ("" if args.suffix is None else f" {args.suffix}")
     training_args = TrainingArguments(
         output_dir="gpt2_pg19",
         overwrite_output_dir=True,
         num_train_epochs=1,
-        eval_steps=100,
-        save_steps=100,
-        per_device_train_batch_size=4,
-        per_device_eval_batch_size=4,
-        gradient_accumulation_steps=args.accum,
-        learning_rate=args.lr,
+        eval_steps=log_freq,
+        save_steps=log_freq,
+        per_device_train_batch_size=device_batch_size,
+        per_device_eval_batch_size=device_batch_size,
+        gradient_accumulation_steps=accum,
+        learning_rate=lr,
         save_total_limit=2,
         fp16=True,
         fp16_opt_level="O2",
