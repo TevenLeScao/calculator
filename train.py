@@ -90,6 +90,8 @@ if __name__ == "__main__":
     total_batch_size = args.batch_size
     accum = args.accum
     if local_rank != -1:
+        # slightly hacky as it will be re-initialized in trainer, but we need it now to get the world size
+        torch.distributed.init_process_group(backend="nccl")
         world_size = torch.distributed.get_world_size()
     else:
         world_size = torch.cuda.device_count()
