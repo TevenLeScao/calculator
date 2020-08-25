@@ -90,7 +90,7 @@ if __name__ == "__main__":
     total_batch_size = args.batch_size
     accum = args.accum
     if local_rank != -1:
-        world_size = os.environ["WORLD_SIZE"]
+        world_size = int(os.environ["WORLD_SIZE"])
     else:
         world_size = torch.cuda.device_count()
     device_batch_size = total_batch_size / world_size / accum
