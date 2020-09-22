@@ -4,7 +4,7 @@ import os
 
 import torch
 
-import nlp
+import datasets
 from transformers import DataCollatorForLanguageModeling, TrainingArguments, GPT2Config, GPT2Tokenizer, GPT2LMHeadModel
 
 from argparsing import parser
@@ -46,13 +46,13 @@ def convert_to_features(example_batch, ids, context_size=2048):
 
 def chunk_dataset(dataset, split, remap=False, sanity=False, cache=""):
     if os.path.isfile(cache) and not remap:
-        chunked_dataset = nlp.Dataset.from_file(cache)
+        chunked_dataset = datasets.Dataset.from_file(cache)
     else:
         # Data
         if sanity:
-            dataset = nlp.load_dataset(dataset, split=f'{split}[:1%]')
+            dataset = datasets.load_dataset(dataset, split=f'{split}[:1%]')
         else:
-            dataset = nlp.load_dataset(dataset, split=split)
+            dataset = datasets.load_dataset(dataset, split=split)
         chunked_dataset = dataset.map(convert_to_features, with_indices=True, batched=True, batch_size=10,
                                       cache_file_name=cache, remove_columns=dataset.column_names,
                                       load_from_cache_file=False)
@@ -90,7 +90,11 @@ if __name__ == "__main__":
     total_batch_size = args.batch_size
     accum = args.accum
     if local_rank != -1:
-        world_size = int(os.environ["WORLD_SIZE"])
+        try:
+            world_size = int(os.environ["WORLD_SIZE"])
+        except KeyError:
+            raise KeyError("This was intended to be used with `torch.distributed.launch` "
+                           "which sets the WORLD_SIZE ENVIRONMENT VALUE")
     else:
         world_size = torch.cuda.device_count()
     device_batch_size = total_batch_size / world_size / accum
