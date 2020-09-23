@@ -106,6 +106,7 @@ if __name__ == "__main__":
         output_dir="gpt2_pg19",
         overwrite_output_dir=True,
         num_train_epochs=1,
+        evaluation_strategy="steps",
         eval_steps=log_freq,
         save_steps=log_freq,
         per_device_train_batch_size=device_batch_size,

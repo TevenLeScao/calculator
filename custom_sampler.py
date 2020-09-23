@@ -149,7 +149,7 @@ class LongRangeTrainer(Trainer):
                 ConsecutiveSampler(eval_dataset, [0], self.args.train_batch_size, shuffle=False)
                 if self.args.local_rank == -1
                 else DistributedConsecutiveSampler(eval_dataset, [0],
-                                                   self.args.per_device_train_batch_size)
+                                                   self.args.per_device_eval_batch_size)
             )
 
         return DataLoader(
@@ -169,7 +169,7 @@ class LongRangeTrainer(Trainer):
                 ConsecutiveSampler(test_dataset, [0], self.args.train_batch_size)
                 if self.args.local_rank == -1
                 else DistributedConsecutiveSampler(test_dataset, [0],
-                                                   self.args.per_device_train_batch_size)
+                                                   self.args.per_device_eval_batch_size)
             )
 
         # We use the same batch_size as for eval.
