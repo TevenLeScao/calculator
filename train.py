@@ -116,7 +116,6 @@ if __name__ == "__main__":
         save_total_limit=2,
         fp16=True,
         fp16_opt_level="O2",
-        evaluate_during_training=True,
         run_name=run_name,
         warmup_steps=args.warmup,
         local_rank=local_rank
