@@ -105,7 +105,7 @@ if __name__ == "__main__":
     training_args = TrainingArguments(
         output_dir="gpt2_pg19",
         overwrite_output_dir=True,
-        num_train_epochs=1,
+        num_train_epochs=args.epochs,
         evaluation_strategy="steps",
         eval_steps=log_freq,
         save_steps=log_freq,
