@@ -62,6 +62,7 @@ def chunk_dataset(dataset, split, remap=False, sanity=False, cache=""):
 
 
 if __name__ == "__main__":
+    torch.backends.cudnn.benchmark = True
     args = parser.parse_args()
     for k, v in vars(args).items():
         logger.info(f"{k}: {v}")
